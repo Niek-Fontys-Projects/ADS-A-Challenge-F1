@@ -8,6 +8,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
+from sklearn.tree import export_graphviz
+from IPython.display import Image
+import pydotplus
+from sklearn.externals.six import StringIO
 
 
 def getdata():
@@ -43,6 +47,21 @@ def getdata():
     return raceratings.dropna()
 
 
+def evalRFR(model, labels):
+    # print("mean_absolute_error: " + str(mean_absolute_error(df[colT], df[colP])))
+    # print("mean_squared_error: " + str(mean_squared_error(df[colT], df[colP])))
+    # print("r2_score: " + str(r2_score(df[colT], df[colP])))
+    i = 0
+    for estimator in model.estimators_:
+        export_graphviz(estimator,
+                        out_file=str(i) + 'tree.dot',
+                        feature_names=labels,
+                        class_names=labels,
+                        rounded=True, proportion=False,
+                        precision=2, filled=True)
+        i += 1
+
+
 def modeltest(model):
     data = getdata()
     data = data.drop(columns=["name"])
@@ -53,6 +72,9 @@ def modeltest(model):
     y_predict = model.predict(x_test)
     testpredict = y_test
     testpredict["p_rating"] = y_predict
+
+    evalRFR(model, data_x.columns)
+
     delta = []
     for i in range(0, len(testpredict)):
         delta.append(abs(testpredict["rating"].iloc[i] - testpredict["p_rating"].iloc[i]))
@@ -98,6 +120,8 @@ def linreg():
     print("r2_score: " + str(r2_score(testpredict["rating"], testpredict["p_rating"])))
     print("metric: " + str(delta.count(True) / len(delta)))
 
+#
+# for i in range(0, 10):
+#     linreg()
 
-for i in range(0, 10):
-    linreg()
+# eval(modeltest(RandomForestRegressor(n_estimators=20)))
